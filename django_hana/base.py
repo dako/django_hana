@@ -73,7 +73,6 @@ class CursorWrapper(object):
         """
             execute with replaced placeholders
         """
-        print sql
         self.cursor.execute(self._replace_params(sql,len(params) if params else 0),params)
 
     def executemany(self, sql, param_list):
