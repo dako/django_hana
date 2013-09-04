@@ -2,6 +2,12 @@ Django DB Backend for SAP HANA
 ==============================
 Ready for use.
 
+Fork notes
+----------
+This fork uses pyodbc instead of the "native" HANA python driver. 
+Why? Because I don't want to be forced to use the shipped (and buggy) 
+version of Python from HANA Studio.
+
 Prerequisite
 ------------
 1. Python compiled with --enable-unicode=ucs2 or use the python provided with hdbclient package.
