@@ -15,7 +15,7 @@ from django.utils.timezone import utc
 from time import time
 
 try:
-    from hdbcli import dbapi as Database
+    import pyodbc as Database
 except ImportError as e:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured("Error loading SAP HANA Python driver: %s" % e)
@@ -37,7 +37,7 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     supports_tablespaces = False
     supports_transactions = True
     can_distinct_on_fields = False
-    uses_autocommit = True
+    uses_autocommit = False
     uses_savepoints = False
     can_introspect_foreign_keys = False
     supports_timezones = False
@@ -73,6 +73,7 @@ class CursorWrapper(object):
         """
             execute with replaced placeholders
         """
+        print sql
         self.cursor.execute(self._replace_params(sql,len(params) if params else 0),params)
 
     def executemany(self, sql, param_list):
@@ -188,9 +189,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             conn_params['host'] = self.settings_dict['HOST']
         if self.settings_dict['PORT']:
             conn_params['port'] = self.settings_dict['PORT']
-        self.connection = Database.connect(address=conn_params['host'],port=int(conn_params['port']),user=conn_params['user'],password=conn_params['password'])
-        # set autocommit on by default
-        self.connection.setautocommit(auto=True)
+        #self.connection = Database.connect(address=conn_params['host'],port=int(conn_params['port']),user=conn_params['user'],password=conn_params['password'])
+		# self.connection = Database.connect("DSN=HDB;DATABASE=" + self.settings_dict['NAME'] + ";UID=" + conn_params['user'] + ";PWD=" + conn_params['password'])
+        self.connection = Database.connect("DRIVER={HDBODBC};SERVERNODE=" + conn_params['host'] + ":" + conn_params['port'] + ";SERVERDB=HDB;UID=" + conn_params['user'] + ";PWD=" + conn_params['password'])
+		# set autocommit on by default
+        #self.connection.setautocommit(auto=True)
         self.default_schema=self.settings_dict['NAME']
         # make it upper case
         self.default_schema=self.default_schema.upper()
@@ -236,8 +239,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             Disables autocommit on entering a transaction
         """
         self.ensure_connection()
-        if self.features.uses_autocommit and managed:
-            self.connection.setautocommit(auto=False)
+        #if self.features.uses_autocommit and managed:
+            #self.connection.setautocommit(auto=False)
 
     def leave_transaction_management(self):
         """
@@ -257,7 +260,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             raise
         finally:
             # restore autocommit behavior
-            self.connection.setautocommit(auto=True)
+			pass
+            #self.connection.setautocommit(auto=True)
         self._dirty = False
 
     def _commit(self):
